@@ -35,12 +35,21 @@ public class LibraryManagementSystem {
 		// faraz: CheckedoutBooks(checkoutId, custId, checkedoutDate, dueDate)
 		// custId is a foreign key in CheckedoutBooks and it is a primary key in
 		// CustInfo table.
-		
+
+//		CustInfo(custId, custFirstName, custLastName)
+
 		try {
-			getStatement()
-					.executeUpdate("CREATE TABLE IF NOT EXISTS CHECKEDOUTBOOKS (id INTEGER NOT NULL, ISBN VARCHAR(10), CUSTID INTEGER, CHECKOUTDATE DATE, DUEDATE DATE)");
-			getStatement()
-			.executeUpdate("INSERT INTO CHECKEDOUTBOOKS (id, ISBN, CUSTID, CHECKOUTDATE, DUEDATE) VALUES (1, 'ASASA', 23, sysdate, sysdate)" );
+			getStatement().executeUpdate(
+					"CREATE TABLE IF NOT EXISTS custInfo (custId integer PRIMARY KEY, custFirstName VARCHAR(20), custLastName VARCHAR(20))");
+			getStatement().executeUpdate(
+					"CREATE TABLE IF NOT EXISTS checkedoutBooks (id integer PRIMARY KEY, isbn VARCHAR(10), checkoutdate DATE, duedate DATE, custId INTEGER, foreign key (custId) references custInfo(custId) )");
+			
+			getStatement().executeUpdate(
+					"INSERT INTO custInfo (custId, custFirstName, custLastName) VALUES (1, 'faraz', 'durrani')");
+			
+			getStatement().executeUpdate(
+					"INSERT INTO checkedoutBooks (id, ISBN, CHECKOUTDATE, DUEDATE, CUSTID) VALUES (1, 'ISBNNO1', sysdate, sysdate, 1)");
+
 			ResultSet res = getStatement().executeQuery("select * from CHECKEDOUTBOOKS");
 			while (res.next()) {
 				System.err.println(res.getInt("id") + " | " + res.getString("ISBN"));

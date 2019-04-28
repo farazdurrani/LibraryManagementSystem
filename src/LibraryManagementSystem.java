@@ -22,10 +22,8 @@ public class LibraryManagementSystem {
 	}
 
 	private void setupLibrary() {
-
 		createTables();
 		loadData();
-
 	}
 
 	/**
@@ -136,20 +134,54 @@ public class LibraryManagementSystem {
 				continue;
 			}
 			try {
-				//first query inventory table to see if isbn exists, if yes, then check quantity
-				getStatement().executeUpdate("INSERT INTO customer (name) values ('" + name + "')");
-				
-				//below will get you the last inserted primary key
-				//SELECT id FROM your_table WHERE id = (SELECT MAX(id) FROM your_table)
-				System.out
-						.println("checkout of book '" + getBookInfo(isbn) + "' successful to customer '" + name + "'");
-				System.out.println("checkout another book or type done.");
+				if (checkInventory(isbn)) {
+					getStatement().executeUpdate("INSERT INTO customer (name) values ('" + name + "')");
+					long lastInsertedCustomerId = getLastCustomerId();
+					System.out.println(
+							"checkout of book '" + getBookInfo(isbn) + "' successful to customer '" + name + "'");
+					System.out.println("checkout another book or type done.");
+				}
 			} catch (SQLException e) {
 				System.err.println("Problem while inserting into database. try again");
 				printInformation();
 				continue;
 			}
 		}
+	}
+
+	private long getLastCustomerId() {
+		ResultSet rs = null;
+		long result = 0L;
+		try {
+			rs = getStatement().executeQuery("select custId from customer where custId= (SELECT MAX(custId) FROM customer)");
+			while (rs.next()) {
+				result = rs.getInt("custId");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	private boolean checkInventory(long isbn) {
+		ResultSet rs = null;
+		boolean result = false;
+		try {
+			rs = getStatement().executeQuery("select * from inventory where isbn=" + isbn);
+			if (!rs.isBeforeFirst() ) {    
+			    System.err.println("isbn " + isbn + " doesn't exist in the database");
+			} 
+			while (rs.next()) {
+				 if(rs.getInt("quantity") > 0) {
+					 result = true;
+				 } else {
+					 System.out.println("Unfortunately, library has run out of copies of " + getBookInfo(isbn) + " book" );
+				 }
+			}
+		} catch (SQLException e) {
+			System.err.println("Error while checking inventory");
+		}
+		return result;
 	}
 
 	private String getBookInfo(long isbn) {

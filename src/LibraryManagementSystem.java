@@ -3,12 +3,16 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class LibraryManagementSystem {
 
 	private Connection conn;
 	private Statement stmt;
+	private boolean welcome = true;
+	private final long[] ISBNS = { 1841598984, 486821951, 1847175902L, 7222176233L, 1503280780, 1795093838, 140447938,
+			60531045, 679410031, 1514637618 };
 
 	public static void main(String[] args) throws SQLException {
 		LibraryManagementSystem program = new LibraryManagementSystem();
@@ -46,10 +50,10 @@ public class LibraryManagementSystem {
 					"CREATE TABLE IF NOT EXISTS inventory (isbn BIGINT, location VARCHAR(5), quantity SMALLINT)");
 
 			getStatement().executeUpdate(
-					"CREATE TABLE IF NOT EXISTS custInfo (custId SMALLINT PRIMARY KEY, custFirstName VARCHAR(20), custLastName VARCHAR(20))");
+					"CREATE TABLE IF NOT EXISTS customer (custId SMALLINT PRIMARY KEY auto_increment, name VARCHAR(50))");
 
 			getStatement().executeUpdate(
-					"CREATE TABLE IF NOT EXISTS checkedoutBooks (id SMALLINT PRIMARY KEY, isbn INTEGER, checkoutdate DATE, duedate DATE, custId INTEGER, foreign key (custId) references custInfo(custId) )");
+					"CREATE TABLE IF NOT EXISTS checkedoutBooks (id SMALLINT PRIMARY KEY auto_increment, isbn INTEGER, checkoutdate DATE, duedate DATE, custId INTEGER, foreign key (custId) references customer(custId) )");
 
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -71,10 +75,10 @@ public class LibraryManagementSystem {
 					+ "(0679410031, 'The Brothers Karamazov', 'Fyodor Dostoyevsky', 'Everymans Library', parsedatetime('1879', 'yyyy')),"
 					+ "(1514637618, 'The Adventures of Huckleberry Finn', 'Mark Twain', 'CreateSpace Independent Publishing Platform', parsedatetime('1885', 'yyyy'))");
 			getStatement().executeUpdate(
-					"INSERT INTO inventory (isbn, location, quantity)" + "VALUES" + "(1841598984, '1-3B', 5),"
-							+ "(0486821951, '2-2F', 5)," + "(1847175902, '1-1B', 5)," + "(7222176233, '2-3C', 5),"
-							+ "(1503280780, '2-2C', 5)," + "(1795093838, '1-1A', 5)," + "(0140447938, '2-3B', 5),"
-							+ "(0060531045, '1-2F', 5)," + "(0679410031, '1-2D', 5)," + "(1514637618, '2-3D', 5)");
+					"INSERT INTO inventory (isbn, location, quantity)" + "VALUES" + "(1841598984, '1-3B', 3),"
+							+ "(0486821951, '2-2F', 9)," + "(1847175902, '1-1B', 2)," + "(7222176233, '2-3C', 4),"
+							+ "(1503280780, '2-2C', 6)," + "(1795093838, '1-1A', 5)," + "(0140447938, '2-3B', 10),"
+							+ "(0060531045, '1-2F', 8)," + "(0679410031, '1-2D', 16)," + "(1514637618, '2-3D', 12)");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -86,25 +90,115 @@ public class LibraryManagementSystem {
 		while (!input.equals("exit")) {
 			if (input.equals("books")) {
 				printAllBooks();
-				input = sc.nextLine();
-				continue;
-			}
-			String[] tokens = input.split(" ");
-			String id = null;
-			String name = null;
-			try {
-				id = tokens[0];
-				name = tokens[1] + " " + tokens[2];
-			} catch (Exception e) {
-				System.err.println(
-						"Wrong Input. Kindly enter a digit followed by a space followed by first name followed by space followed by last name");
-			}
-			if (id != null && name != null) {
-				insertPresident(id, name);
+			} else if (input.equals("inventory")) {
+				printInventory();
+			} else if (input.equals("checkout")) {
+				checkout(sc);
+			} else {
+				System.out.println("Invalid key");
+				printInformation();
 			}
 			input = sc.nextLine();
+			continue;
 		}
 		sc.close();
+	}
+
+	private void printCheckoutBookInfo() {
+		System.out.println("To checkout a book, Enter books ISBN number, followed by your full name");
+		System.out.println("You must have a first and last name and a space between them");
+		System.out.println("For example, 0060531045 Jordan Peterson");
+		System.out.println("Type done when done checking out books");
+	}
+
+	private void checkout(Scanner sc) {
+		printCheckoutBookInfo();
+		String input = null;
+		while (true) {
+			input = sc.nextLine();
+			if (input.equals("done")) {
+				System.out.println("done checking out the book. Going to main screen.");
+				printInformation();
+				break;
+			}
+			String[] split = input.split(" ");
+			String name = null;
+			long isbn = 0L;
+			try {
+				isbn = Long.valueOf(split[0]);
+				name = split[1] + " " + split[2];
+			} catch (Exception e) {
+				System.err.println("Invalid input. ");
+				printCheckoutBookInfo();
+				continue;
+			}
+			if (isbn == 0L || name == null) {
+				System.err.println("Invalid isbn number or name. Try again");
+				printInformation();
+				continue;
+			}
+			if(!validateISBN(isbn)) {
+				System.err.println("No book found of such ISBN. \nThis library has a limited number of books.\nKindly checkout only those books that exists.");
+				printAllBooks();
+				continue;
+			}
+			try {
+				getStatement().executeUpdate("INSERT INTO customer (name) values ('" + name + "')");
+				System.out
+						.println("checkout of book '" + getBookInfo(isbn) + "' successful to customer '" + name + "'");
+				System.out.println("checkout another book or type done.");
+			} catch (SQLException e) {
+				System.err.println("Problem while inserting into database. try again");
+				printInformation();
+				continue;
+			}
+		}
+	}
+
+	private boolean validateISBN(long isbn) {
+		return Arrays.stream(ISBNS).anyMatch(x -> x == isbn);
+	}
+
+	private String getBookInfo(long isbn) {
+		ResultSet rs = null;
+		String result = "";
+		try {
+			rs = getStatement().executeQuery("select * from book where isbn=" + isbn);
+			while (rs.next()) {
+				result = rs.getString("name");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	private void printInventory() {
+		System.out.printf("%10s%10s%10s%n", "ISBN", "LOCATION", "QUANTITY");
+		ResultSet rs = null;
+		try {
+			rs = getStatement().executeQuery("select * from inventory");
+			while (rs.next()) {
+				System.out.printf("%010d%10s%10s%n", rs.getLong("isbn"), rs.getString("location"),
+						rs.getInt("quantity"));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void printAllBooks() {
+		System.out.printf("%10s%35s%25s%45s %s\n", "ISBN", "NAME", "AUTHOR", "PUBLISHER", "YEAR PUBLISHED");
+		ResultSet rs = null;
+		try {
+			rs = getStatement().executeQuery("select * from book");
+			while (rs.next()) {
+				System.out.printf("%010d%35s%25s%45s %14tY %n", rs.getLong("isbn"), rs.getString("name"),
+						rs.getString("author"), rs.getString("publisher"), rs.getDate("yearPublished"));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void insertPresident(String id, String name) {
@@ -117,11 +211,15 @@ public class LibraryManagementSystem {
 	}
 
 	private void printInformation() {
-		System.out.println("Welcome to Library Management System");
+		if (welcome) {
+			System.out.println("Welcome to Library Management System");
+			welcome = false;
+		}
 		System.out.println("You can view books, check inventory, and enter your information to checkout books.");
 		System.out.println("Type books to view all books in the library,");
 		System.out.println("Type inventory to check the inventory,");
 		System.out.println("Type checkout to checkout a book,");
+		System.out.println("Type loanedout to see checkout details,");
 		System.out.println("type exit to exit the program.");
 	}
 
@@ -157,32 +255,4 @@ public class LibraryManagementSystem {
 			}
 		}
 	}
-
-	private void printAllBooks() {
-		System.out.printf("%10s%35s%25s%45s %s\n", "ISBN", "NAME", "AUTHOR", "PUBLISHER", "YEAR PUBLISHED" );
-		ResultSet rs = null;
-		try {
-			rs = getStatement().executeQuery("select * from book");
-			while (rs.next()) {
-				System.out.printf("%010d%35s%25s%45s %14tY %n", rs.getLong("isbn") , rs.getString("name") , rs.getString("author") , rs.getString("publisher") , rs.getDate("yearPublished"));
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-
-//	try {
-//		getStatement().executeUpdate(
-//				"INSERT INTO custInfo (custId, custFirstName, custLastName) VALUES (1, 'faraz', 'durrani')");
-//
-//		getStatement().executeUpdate(
-//				"INSERT INTO checkedoutBooks (id, ISBN, CHECKOUTDATE, DUEDATE, CUSTID) VALUES (2, 'ISBNNO1', sysdate, sysdate, 1)");
-//
-//		ResultSet res = getStatement().executeQuery("select * from CHECKEDOUTBOOKS");
-//		while (res.next()) {
-//			System.err.println(res.getInt("id") + " | " + res.getString("ISBN"));
-//		}
-//	} catch (SQLException e) {
-//		e.printStackTrace();
-//	}
 }

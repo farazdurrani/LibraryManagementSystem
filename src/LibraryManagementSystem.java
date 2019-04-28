@@ -24,35 +24,31 @@ public class LibraryManagementSystem {
 	}
 
 	private void setupLibrary() {
-		// You need to add the isbn into the checkout table.
-		// Also, in your inventory table you mention that there are copies of each book
-		// but in your email below (the first email).
-		// you mention that there is only 1 copy of each book.
-		// Your book table should only contain information on each book not checked out
-		// details.
-		// Your customer should only contain info on the customer.
-		// and your checkoutbook can contain the checkout information for the book and
-		// the customer and checkout dates.
-
-//		faraz: Book(isbn, name, author, publisher, yearpublished, checkedOut, checkoutId)
-
-//		Inventory(id, isbn, aisleNo, shelfLevel, numberOfCopies)
-
-//		CustInfo(custId, custFirstName, custLastName)
 
 		createTables();
 		loadData();
 
 	}
 
+	/**
+	 * NOTES: 
+	 * You need to add the isbn into the checkout table. Also, in your
+	 * inventory table you mention that there are copies of each book but in your
+	 * email below (the first email). you mention that there is only 1 copy of each
+	 * book. Your book table should only contain information on each book not
+	 * checked out details. Your customer should only contain info on the customer.
+	 * and your checkoutbook can contain the checkout information for the book and
+	 * the customer and checkout dates.
+	 */
+
 	private void createTables() {
 
 		try {
 			getStatement().executeUpdate(
 					"CREATE TABLE IF NOT EXISTS book (isbn BIGINT PRIMARY KEY, name VARCHAR(35), author VARCHAR(30), publisher VARCHAR(45), yearPublished TIMESTAMP)");
-			
+
 			getStatement().executeUpdate(
-					"CREATE TABLE IF NOT EXISTS inventory (isbn BIGINT, aisleNo VARCHAR(5), shelf VARCHAR(3), quantity INTEGER)");
+					"CREATE TABLE IF NOT EXISTS inventory (isbn BIGINT, location VARCHAR(5), quantity SMALLINT)");
 
 			getStatement().executeUpdate(
 					"CREATE TABLE IF NOT EXISTS custInfo (custId SMALLINT PRIMARY KEY, custFirstName VARCHAR(20), custLastName VARCHAR(20))");
@@ -67,21 +63,23 @@ public class LibraryManagementSystem {
 
 	private void loadData() {
 		try {
+			getStatement().executeUpdate("INSERT INTO book " + "(isbn, name, author, publisher, yearPublished) "
+					+ "VALUES "
+					+ "(1841598984, 'In Search of Lost Time', 'Marcel Proust', 'Grasset and Gallimard', parsedatetime('1913', 'yyyy')),"
+					+ "(0486821951, 'Don Quixote', 'Miguel de Cervantes', 'Dover Publications', parsedatetime('1605', 'yyyy')),"
+					+ "(1847175902, 'Ulysses', 'James Joyce', 'OBrien Press', parsedatetime('1922', 'yyyy')),"
+					+ "(7222176233, 'The Great Gatsby', 'F. Scott Fitzgerald', 'Yunnan Peoples Publishing House', parsedatetime('1925', 'yyyy')),"
+					+ "(1503280780, 'Moby Dick', 'Herman Melville', 'CreateSpace Independent Publishing Platform', parsedatetime('1851', 'yyyy')),"
+					+ "(1795093838, 'Hamlet', 'William Shakespeare', 'Independently published', parsedatetime('1599', 'yyyy')),"
+					+ "(0140447938, 'War and Peace', 'Leo Tolstoy', 'Everymans Library', parsedatetime('1869', 'yyyy')),"
+					+ "(0060531045, 'One Hundred Years of Solitude', 'Gabriel Garcia Marquez', 'Harper', parsedatetime('1967', 'yyyy')),"
+					+ "(0679410031, 'The Brothers Karamazov', 'Fyodor Dostoyevsky', 'Everymans Library', parsedatetime('1879', 'yyyy')),"
+					+ "(1514637618, 'The Adventures of Huckleberry Finn', 'Mark Twain', 'CreateSpace Independent Publishing Platform', parsedatetime('1885', 'yyyy'))");
 			getStatement().executeUpdate(
-					"INSERT INTO book "
-							+ "(isbn, name, author, publisher, yearPublished) "
-							+ "VALUES "
-							+ "(1841598984, 'In Search of Lost Time', 'Marcel Proust', 'Grasset and Gallimard', parsedatetime('1913', 'yyyy')),"
-							+ "(0486821951, 'Don Quixote', 'Miguel de Cervantes', 'Dover Publications', parsedatetime('1605', 'yyyy')),"
-							+ "(1847175902, 'Ulysses', 'James Joyce', 'OBrien Press', parsedatetime('1922', 'yyyy')),"
-							+ "(7222176233, 'The Great Gatsby', 'F. Scott Fitzgerald', 'Yunnan Peoples Publishing House', parsedatetime('1925', 'yyyy')),"
-							+ "(1503280780, 'Moby Dick', 'Herman Melville', 'CreateSpace Independent Publishing Platform', parsedatetime('1851', 'yyyy')),"
-							+ "(1795093838, 'Hamlet', 'William Shakespeare', 'Independently published', parsedatetime('1599', 'yyyy')),"
-							+ "(0140447938, 'War and Peace', 'Leo Tolstoy', 'Everymans Library', parsedatetime('1869', 'yyyy')),"
-							+ "(0060531045, 'One Hundred Years of Solitude', 'Gabriel Garcia Marquez', 'Harper', parsedatetime('1967', 'yyyy')),"
-							+ "(0679410031, 'The Brothers Karamazov', 'Fyodor Dostoyevsky', 'Everymans Library', parsedatetime('1879', 'yyyy')),"
-							+ "(1514637618, 'The Adventures of Huckleberry Finn', 'Mark Twain', 'CreateSpace Independent Publishing Platform', parsedatetime('1885', 'yyyy'))"
-					);
+					"INSERT INTO inventory (isbn, location, quantity)" + "VALUES" + "(1841598984, '1-3B', 5),"
+							+ "(0486821951, '2-2F', 5)," + "(1847175902, '1-1B', 5)," + "(7222176233, '2-3C', 5),"
+							+ "(1503280780, '2-2C', 5)," + "(1795093838, '1-1A', 5)," + "(0140447938, '2-3B', 5),"
+							+ "(0060531045, '1-2F', 5)," + "(0679410031, '1-2D', 5)," + "(1514637618, '2-3D', 5)");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

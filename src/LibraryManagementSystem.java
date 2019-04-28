@@ -3,8 +3,6 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.Scanner;
 
 public class LibraryManagementSystem {
@@ -16,10 +14,8 @@ public class LibraryManagementSystem {
 		LibraryManagementSystem program = new LibraryManagementSystem();
 		program.cleanUpOnStartUp();
 		program.setupLibrary();
-//		program.cleanUpOnStartUp();
-//		program.createTable();
-//		program.printInformation();
-//		program.takeUserInput();
+		program.printInformation();
+		program.takeUserInput();
 		System.out.println("Good bye");
 	}
 
@@ -31,8 +27,7 @@ public class LibraryManagementSystem {
 	}
 
 	/**
-	 * NOTES: 
-	 * You need to add the isbn into the checkout table. Also, in your
+	 * NOTES: You need to add the isbn into the checkout table. Also, in your
 	 * inventory table you mention that there are copies of each book but in your
 	 * email below (the first email). you mention that there is only 1 copy of each
 	 * book. Your book table should only contain information on each book not
@@ -45,7 +40,7 @@ public class LibraryManagementSystem {
 
 		try {
 			getStatement().executeUpdate(
-					"CREATE TABLE IF NOT EXISTS book (isbn BIGINT PRIMARY KEY, name VARCHAR(35), author VARCHAR(30), publisher VARCHAR(45), yearPublished TIMESTAMP)");
+					"CREATE TABLE IF NOT EXISTS book (isbn BIGINT PRIMARY KEY, name VARCHAR(35), author VARCHAR(25), publisher VARCHAR(45), yearPublished TIMESTAMP)");
 
 			getStatement().executeUpdate(
 					"CREATE TABLE IF NOT EXISTS inventory (isbn BIGINT, location VARCHAR(5), quantity SMALLINT)");
@@ -89,8 +84,8 @@ public class LibraryManagementSystem {
 		Scanner sc = new Scanner(System.in);
 		String input = sc.nextLine();
 		while (!input.equals("exit")) {
-			if (input.equals("show all")) {
-				printAllPresidents();
+			if (input.equals("books")) {
+				printAllBooks();
 				input = sc.nextLine();
 				continue;
 			}
@@ -122,22 +117,12 @@ public class LibraryManagementSystem {
 	}
 
 	private void printInformation() {
-		System.out.println("Hi! This program allows you to store president info in the database.");
-		System.out.println("You can enter which president number he was and his name.");
-		System.out.println("For example, 44 Barack Obama");
-		System.out.println("He will be assigned '44' as an ID and 'Barack Obama' as a name");
-		System.out.println("You can type 'show all' (without quotes) to print all the entered president names");
-		System.out.println("type exit to exit the program");
-	}
-
-	private void createTable() {
-		try {
-			getStatement()
-					.executeUpdate("CREATE TABLE IF NOT EXISTS PRESIDENTS (id INTEGER NOT NULL, name VARCHAR(30))");
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+		System.out.println("Welcome to Library Management System");
+		System.out.println("You can view books, check inventory, and enter your information to checkout books.");
+		System.out.println("Type books to view all books in the library,");
+		System.out.println("Type inventory to check the inventory,");
+		System.out.println("Type checkout to checkout a book,");
+		System.out.println("type exit to exit the program.");
 	}
 
 	public void cleanUpOnStartUp() {
@@ -173,18 +158,13 @@ public class LibraryManagementSystem {
 		}
 	}
 
-	private void printAllPresidents() {
+	private void printAllBooks() {
+		System.out.printf("%10s%35s%25s%45s %s\n", "ISBN", "NAME", "AUTHOR", "PUBLISHER", "YEAR PUBLISHED" );
 		ResultSet rs = null;
-		boolean any = true;
 		try {
-			rs = getStatement().executeQuery("select * from PRESIDENTS");
+			rs = getStatement().executeQuery("select * from book");
 			while (rs.next()) {
-				any = false;
-				System.out.println(rs.getInt("id") + " " + rs.getString("name"));
-			}
-			if (any) {
-				System.out.println(
-						"There are no presidents on records. \nFirst enter a few president names and then try again");
+				System.out.printf("%010d%35s%25s%45s %14tY %n", rs.getLong("isbn") , rs.getString("name") , rs.getString("author") , rs.getString("publisher") , rs.getDate("yearPublished"));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

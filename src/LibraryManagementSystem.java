@@ -11,8 +11,6 @@ public class LibraryManagementSystem {
 	private Connection conn;
 	private Statement stmt;
 	private boolean welcome = true;
-	private final long[] ISBNS = { 1841598984, 486821951, 1847175902L, 7222176233L, 1503280780, 1795093838, 140447938,
-			60531045, 679410031, 1514637618 };
 
 	public static void main(String[] args) throws SQLException {
 		LibraryManagementSystem program = new LibraryManagementSystem();
@@ -137,13 +135,12 @@ public class LibraryManagementSystem {
 				printInformation();
 				continue;
 			}
-			if(!validateISBN(isbn)) {
-				System.err.println("No book found of such ISBN. \nThis library has a limited number of books.\nKindly checkout only those books that exists.");
-				printAllBooks();
-				continue;
-			}
 			try {
+				//first query inventory table to see if isbn exists, if yes, then check quantity
 				getStatement().executeUpdate("INSERT INTO customer (name) values ('" + name + "')");
+				
+				//below will get you the last inserted primary key
+				//SELECT id FROM your_table WHERE id = (SELECT MAX(id) FROM your_table)
 				System.out
 						.println("checkout of book '" + getBookInfo(isbn) + "' successful to customer '" + name + "'");
 				System.out.println("checkout another book or type done.");
@@ -153,10 +150,6 @@ public class LibraryManagementSystem {
 				continue;
 			}
 		}
-	}
-
-	private boolean validateISBN(long isbn) {
-		return Arrays.stream(ISBNS).anyMatch(x -> x == isbn);
 	}
 
 	private String getBookInfo(long isbn) {

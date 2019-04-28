@@ -3,6 +3,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Scanner;
 
 public class LibraryManagementSystem {
@@ -13,7 +15,7 @@ public class LibraryManagementSystem {
 	public static void main(String[] args) throws SQLException {
 		LibraryManagementSystem program = new LibraryManagementSystem();
 		program.cleanUpOnStartUp();
-		program.loadInventory();
+		program.setupLibrary();
 //		program.cleanUpOnStartUp();
 //		program.createTable();
 //		program.printInformation();
@@ -21,7 +23,7 @@ public class LibraryManagementSystem {
 		System.out.println("Good bye");
 	}
 
-	private void loadInventory() {
+	private void setupLibrary() {
 		// You need to add the isbn into the checkout table.
 		// Also, in your inventory table you mention that there are copies of each book
 		// but in your email below (the first email).
@@ -32,50 +34,58 @@ public class LibraryManagementSystem {
 		// and your checkoutbook can contain the checkout information for the book and
 		// the customer and checkout dates.
 
-		// faraz: CheckedoutBooks(checkoutId, custId, checkedoutDate, dueDate)
-		// custId is a foreign key in CheckedoutBooks and it is a primary key in
-		// CustInfo table.
+//		faraz: Book(isbn, name, author, publisher, yearpublished, checkedOut, checkoutId)
+
+//		Inventory(id, isbn, aisleNo, shelfLevel, numberOfCopies)
 
 //		CustInfo(custId, custFirstName, custLastName)
 
+		createTables();
+		loadData();
+
+	}
+
+	private void createTables() {
+
 		try {
 			getStatement().executeUpdate(
-					"CREATE TABLE IF NOT EXISTS custInfo (custId integer PRIMARY KEY, custFirstName VARCHAR(20), custLastName VARCHAR(20))");
-			getStatement().executeUpdate(
-					"CREATE TABLE IF NOT EXISTS checkedoutBooks (id integer PRIMARY KEY, isbn VARCHAR(10), checkoutdate DATE, duedate DATE, custId INTEGER, foreign key (custId) references custInfo(custId) )");
+					"CREATE TABLE IF NOT EXISTS book (isbn BIGINT PRIMARY KEY, name VARCHAR(35), author VARCHAR(30), publisher VARCHAR(45), yearPublished TIMESTAMP)");
 			
 			getStatement().executeUpdate(
-					"INSERT INTO custInfo (custId, custFirstName, custLastName) VALUES (1, 'faraz', 'durrani')");
-			
-			getStatement().executeUpdate(
-					"INSERT INTO checkedoutBooks (id, ISBN, CHECKOUTDATE, DUEDATE, CUSTID) VALUES (1, 'ISBNNO1', sysdate, sysdate, 1)");
+					"CREATE TABLE IF NOT EXISTS inventory (isbn BIGINT, aisleNo VARCHAR(5), shelf VARCHAR(3), quantity INTEGER)");
 
-			ResultSet res = getStatement().executeQuery("select * from CHECKEDOUTBOOKS");
-			while (res.next()) {
-				System.err.println(res.getInt("id") + " | " + res.getString("ISBN"));
-			}
+			getStatement().executeUpdate(
+					"CREATE TABLE IF NOT EXISTS custInfo (custId SMALLINT PRIMARY KEY, custFirstName VARCHAR(20), custLastName VARCHAR(20))");
+
+			getStatement().executeUpdate(
+					"CREATE TABLE IF NOT EXISTS checkedoutBooks (id SMALLINT PRIMARY KEY, isbn INTEGER, checkoutdate DATE, duedate DATE, custId INTEGER, foreign key (custId) references custInfo(custId) )");
 
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-
 	}
 
-//	private void loadInventory() {
-//		try {
-//			getStatement() // Book(isbn, name, author, publisher, yearpublished, checkedOut, checkoutId)
-////			checkoutId in Book is foreign key and it is a primary key in CheckedoutBooks. 
-//					.executeUpdate(
-//							"CREATE TABLE IF NOT EXISTS BOOK (ISBN VARCHAR(10) NOT NULL, NAME VARCHAR(30), AUTHOR VARCHAR(30), PUBLISHER VARCHAR(30) VARCHAR(5), YEARPUBLISHED DATE, CHECKEDOUT BOOLEAN, checkoutId INTEGER)");
-//			getStatement() // id, isbn, aisleNo, shelfLevel, numberOfCopies
-//					// Isbn is a foreign key which maps to isbn in Book table. Isbn is a primary key
-//					// in Book table.
-//					.executeUpdate(
-//							"CREATE TABLE IF NOT EXISTS INVENTORY (id INTEGER NOT NULL, ISBN VARCHAR(10), aisleNo VARCHAR(5), shelfLevel VARCHAR(5), numOfCopies INTEGER)");
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//		}
-//	}
+	private void loadData() {
+		try {
+			getStatement().executeUpdate(
+					"INSERT INTO book "
+							+ "(isbn, name, author, publisher, yearPublished) "
+							+ "VALUES "
+							+ "(1841598984, 'In Search of Lost Time', 'Marcel Proust', 'Grasset and Gallimard', parsedatetime('1913', 'yyyy')),"
+							+ "(0486821951, 'Don Quixote', 'Miguel de Cervantes', 'Dover Publications', parsedatetime('1605', 'yyyy')),"
+							+ "(1847175902, 'Ulysses', 'James Joyce', 'OBrien Press', parsedatetime('1922', 'yyyy')),"
+							+ "(7222176233, 'The Great Gatsby', 'F. Scott Fitzgerald', 'Yunnan Peoples Publishing House', parsedatetime('1925', 'yyyy')),"
+							+ "(1503280780, 'Moby Dick', 'Herman Melville', 'CreateSpace Independent Publishing Platform', parsedatetime('1851', 'yyyy')),"
+							+ "(1795093838, 'Hamlet', 'William Shakespeare', 'Independently published', parsedatetime('1599', 'yyyy')),"
+							+ "(0140447938, 'War and Peace', 'Leo Tolstoy', 'Everymans Library', parsedatetime('1869', 'yyyy')),"
+							+ "(0060531045, 'One Hundred Years of Solitude', 'Gabriel Garcia Marquez', 'Harper', parsedatetime('1967', 'yyyy')),"
+							+ "(0679410031, 'The Brothers Karamazov', 'Fyodor Dostoyevsky', 'Everymans Library', parsedatetime('1879', 'yyyy')),"
+							+ "(1514637618, 'The Adventures of Huckleberry Finn', 'Mark Twain', 'CreateSpace Independent Publishing Platform', parsedatetime('1885', 'yyyy'))"
+					);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 
 	private void takeUserInput() {
 		Scanner sc = new Scanner(System.in);
@@ -182,4 +192,19 @@ public class LibraryManagementSystem {
 			e.printStackTrace();
 		}
 	}
+
+//	try {
+//		getStatement().executeUpdate(
+//				"INSERT INTO custInfo (custId, custFirstName, custLastName) VALUES (1, 'faraz', 'durrani')");
+//
+//		getStatement().executeUpdate(
+//				"INSERT INTO checkedoutBooks (id, ISBN, CHECKOUTDATE, DUEDATE, CUSTID) VALUES (2, 'ISBNNO1', sysdate, sysdate, 1)");
+//
+//		ResultSet res = getStatement().executeQuery("select * from CHECKEDOUTBOOKS");
+//		while (res.next()) {
+//			System.err.println(res.getInt("id") + " | " + res.getString("ISBN"));
+//		}
+//	} catch (SQLException e) {
+//		e.printStackTrace();
+//	}
 }

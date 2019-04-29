@@ -24,7 +24,18 @@ public class LibraryManagementSystem {
 
 	private void setupLibrary() {
 		createTables();
+		createView();
 		loadData();
+	}
+
+	private void createView() {
+		try {
+			getStatement().executeUpdate(
+					"CREATE VIEW INVENTORYBYQUANTITYDESC AS SELECT * FROM INVENTORY ORDER BY quantity DESC");
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -89,6 +100,8 @@ public class LibraryManagementSystem {
 				printAllBooks();
 			} else if (input.equals("inventory")) {
 				printInventory();
+			} else if (input.equals("inventoryDesc")) {
+				printInventoryView();
 			} else if (input.equals("checkout")) {
 				checkout(sc);
 			} else if (input.equals("loanedout")) {
@@ -103,20 +116,36 @@ public class LibraryManagementSystem {
 		sc.close();
 	}
 
+	private void printInventoryView() {
+		ResultSet rs = null;
+		try {
+			String query = "SELECT * from INVENTORYBYQUANTITYDESC";
+
+			rs = getStatement().executeQuery(query);
+			System.out.printf("%10s%10s%10s%n", "ISBN", "LOCATION", "QUANTITY");
+			while (rs.next()) {
+				System.out.printf("%010d%10s%10s%n", rs.getLong("isbn"), rs.getString("location"),
+						rs.getInt("quantity"));
+			}
+		} catch (SQLException e) {
+			System.err.println("Error while print Inventory View by Desc");
+		}
+	}
+
 	private void printLoanedOutInfo() {
 		ResultSet rs = null;
 		try {
 			String joinQuery = "SELECT book.name, book.isbn, checkedoutBooks.checkoutDate, checkedoutBooks.dueDate , customer.name as custName "
-					+ "FROM book "
-					+ "INNER JOIN checkedoutBooks ON book.isbn=checkedoutBooks.isbn "
+					+ "FROM book " + "INNER JOIN checkedoutBooks ON book.isbn=checkedoutBooks.isbn "
 					+ "INNER JOIN customer ON checkedoutBooks.custId = customer.custId";
-						
+
 			rs = getStatement().executeQuery(joinQuery);
 			if (!rs.isBeforeFirst()) {
 				System.err.println("No book is loaned out from library yet.");
 			}
 			while (rs.next()) {
-				System.out.println("Book '" +  rs.getString("name") + "' is loaned out to " + rs.getString("custName") + ". It is due back by " + rs.getDate("dueDate") +  ".");
+				System.out.println("Book '" + rs.getString("name") + "' is loaned out to " + rs.getString("custName")
+						+ ". It is due back by " + rs.getDate("dueDate") + ".");
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -172,7 +201,7 @@ public class LibraryManagementSystem {
 	}
 
 	private void decreaseQuantity(long isbn) {
-		String query = "UPDATE inventory SET quantity = " + (getQuantity(isbn)-1) +  " WHERE isbn=" + isbn;
+		String query = "UPDATE inventory SET quantity = " + (getQuantity(isbn) - 1) + " WHERE isbn=" + isbn;
 		try {
 			getStatement().executeUpdate(query);
 		} catch (SQLException e) {
@@ -194,8 +223,9 @@ public class LibraryManagementSystem {
 	}
 
 	private void printSuccessfulCheckoutMessage(long isbn, String name) {
-		System.out.println("checkout of book '" + getBookInfo(isbn) + "' with isbn " + isbn + " successful to customer '" + name + "'");
-		Calendar c = Calendar.getInstance();    
+		System.out.println("checkout of book '" + getBookInfo(isbn) + "' with isbn " + isbn
+				+ " successful to customer '" + name + "'");
+		Calendar c = Calendar.getInstance();
 		c.add(Calendar.DATE, 28);
 		System.out.println("Book is due in 28 days: " + c.getTime());
 		System.out.println("checkout another book or type done.");
@@ -291,12 +321,14 @@ public class LibraryManagementSystem {
 
 	private void printInformation() {
 		if (welcome) {
-			System.out.println("Welcome to Library Management System");
+			System.out.println(
+					"Welcome to Library Management System. This library has a limited selection of Top 10 books. \nYou can only checkout books from this limited selection.");
 			welcome = false;
 		}
 		System.out.println("You can view books, check inventory, and enter your information to checkout books.");
 		System.out.println("Type books to view all books in the library,");
 		System.out.println("Type inventory to check the inventory,");
+		System.out.println("Type inventoryDesc to view the inventory sorted by quantity descending,");
 		System.out.println("Type checkout to checkout a book,");
 		System.out.println("Type loanedout to see checkout details,");
 		System.out.println("type exit to exit the program.");

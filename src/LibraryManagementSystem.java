@@ -7,20 +7,20 @@ import java.util.Calendar;
 import java.util.Scanner;
 
 public class LibraryManagementSystem {
-//TODO: ROLLBACK
-//TODO: SUBSTRACT FROM INVENTORY WHEN CHECKEDOUT
-	private Connection conn;
-	private Statement stmt;
-	private boolean welcome = true;
-
+	
 	public static void main(String[] args) throws SQLException {
 		LibraryManagementSystem program = new LibraryManagementSystem();
 		program.cleanUpOnStartUp();
 		program.setupLibrary();
 		program.printInformation();
 		program.takeUserInput();
-		System.out.println("Good bye");
+		System.out.println("Thanks for using Library Management System. \nGood bye");
 	}
+	
+	private Connection conn;
+	private Statement stmt;
+	private boolean welcome = true;
+
 
 	private void setupLibrary() {
 		createTables();
@@ -37,16 +37,6 @@ public class LibraryManagementSystem {
 			e.printStackTrace();
 		}
 	}
-
-	/**
-	 * NOTES: You need to add the isbn into the checkout table. Also, in your
-	 * inventory table you mention that there are copies of each book but in your
-	 * email below (the first email). you mention that there is only 1 copy of each
-	 * book. Your book table should only contain information on each book not
-	 * checked out details. Your customer should only contain info on the customer.
-	 * and your checkoutbook can contain the checkout information for the book and
-	 * the customer and checkout dates.
-	 */
 
 	private void createTables() {
 

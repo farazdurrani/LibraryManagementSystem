@@ -3,7 +3,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Scanner;
 
 public class LibraryManagementSystem {
@@ -90,6 +90,8 @@ public class LibraryManagementSystem {
 				printInventory();
 			} else if (input.equals("checkout")) {
 				checkout(sc);
+			} else if (input.equals("loanedout")) {
+				printLoanedOutInfo();
 			} else {
 				System.out.println("Invalid key");
 				printInformation();
@@ -98,6 +100,33 @@ public class LibraryManagementSystem {
 			continue;
 		}
 		sc.close();
+	}
+
+	private void printLoanedOutInfo() {
+		ResultSet rs = null;
+		try {
+			String query = "SELECT book.name, book.isbn, checkedoutBooks.checkoutDate, checkedoutBooks.dueDate "
+					+ "FROM book INNER JOIN checkedoutBooks ON book.isbn=checkedoutBooks.isbn";
+			
+//		"CREATE TABLE IF NOT EXISTS book (isbn BIGINT PRIMARY KEY, name VARCHAR(35), author VARCHAR(25), publisher VARCHAR(45), yearPublished TIMESTAMP)");
+			
+//		"CREATE TABLE IF NOT EXISTS customer (custId SMALLINT PRIMARY KEY auto_increment, name VARCHAR(50))");
+
+
+//			rs = getStatement().executeQuery("select * from checkedoutBooks");
+			
+			rs = getStatement().executeQuery(query);
+			if (!rs.isBeforeFirst()) {
+				System.err.println("No book is loaned out from library yet.");
+			}
+			while (rs.next()) {
+//			isbn INTEGER, checkoutdate DATE, duedate DATE, custId INTEGER)");
+
+				System.err.println(rs.getDate("dueDate") +  " " + rs.getString("name"));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void printCheckoutBookInfo() {
@@ -135,11 +164,9 @@ public class LibraryManagementSystem {
 			}
 			try {
 				if (checkInventory(isbn)) {
-					getStatement().executeUpdate("INSERT INTO customer (name) values ('" + name + "')");
-					long lastInsertedCustomerId = getLastCustomerId();
-					System.out.println(
-							"checkout of book '" + getBookInfo(isbn) + "' successful to customer '" + name + "'");
-					System.out.println("checkout another book or type done.");
+					insertIntoCustomerTable(name);
+					insertIntoCheckoutBookTable(getLastCustomerId(), isbn);
+					printSuccessfulCheckoutMessage(isbn, name);
 				}
 			} catch (SQLException e) {
 				System.err.println("Problem while inserting into database. try again");
@@ -149,11 +176,29 @@ public class LibraryManagementSystem {
 		}
 	}
 
+	private void printSuccessfulCheckoutMessage(long isbn, String name) {
+		System.out.println("checkout of book '" + getBookInfo(isbn) + "' with isbn " + isbn + " successful to customer '" + name + "'");
+		Calendar c = Calendar.getInstance();    
+		c.add(Calendar.DATE, 28);
+		System.out.println("Book is due in 28 days: " + c.getTime());
+		System.out.println("checkout another book or type done.");
+	}
+
+	private void insertIntoCustomerTable(String name) throws SQLException {
+		getStatement().executeUpdate("INSERT INTO customer (name) values ('" + name + "')");
+	}
+
+	private void insertIntoCheckoutBookTable(long lastCustomerId, long isbn) throws SQLException {
+		getStatement().executeUpdate("INSERT INTO checkedoutBooks (isbn, checkoutdate, duedate, custId) values (" + isbn
+				+ ", sysdate, sysdate + 28, " + lastCustomerId + ")");
+	}
+
 	private long getLastCustomerId() {
 		ResultSet rs = null;
 		long result = 0L;
 		try {
-			rs = getStatement().executeQuery("select custId from customer where custId= (SELECT MAX(custId) FROM customer)");
+			rs = getStatement()
+					.executeQuery("select custId from customer where custId= (SELECT MAX(custId) FROM customer)");
 			while (rs.next()) {
 				result = rs.getInt("custId");
 			}
@@ -168,15 +213,16 @@ public class LibraryManagementSystem {
 		boolean result = false;
 		try {
 			rs = getStatement().executeQuery("select * from inventory where isbn=" + isbn);
-			if (!rs.isBeforeFirst() ) {    
-			    System.err.println("isbn " + isbn + " doesn't exist in the database");
-			} 
+			if (!rs.isBeforeFirst()) {
+				System.err.println("isbn " + isbn + " doesn't exist in the database");
+			}
 			while (rs.next()) {
-				 if(rs.getInt("quantity") > 0) {
-					 result = true;
-				 } else {
-					 System.out.println("Unfortunately, library has run out of copies of " + getBookInfo(isbn) + " book" );
-				 }
+				if (rs.getInt("quantity") > 0) {
+					result = true;
+				} else {
+					System.out
+							.println("Unfortunately, library has run out of copies of " + getBookInfo(isbn) + " book");
+				}
 			}
 		} catch (SQLException e) {
 			System.err.println("Error while checking inventory");
@@ -224,15 +270,6 @@ public class LibraryManagementSystem {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-	}
-
-	private void insertPresident(String id, String name) {
-		try {
-			getStatement().executeUpdate("INSERT INTO PRESIDENTS (id, name) values (" + id + ",'" + name + "')");
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		System.out.println("Insert successful");
 	}
 
 	private void printInformation() {

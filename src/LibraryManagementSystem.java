@@ -160,6 +160,7 @@ public class LibraryManagementSystem {
 				if (checkInventory(isbn)) {
 					insertIntoCustomerTable(name);
 					insertIntoCheckoutBookTable(getLastCustomerId(), isbn);
+					decreaseQuantity(isbn);
 					printSuccessfulCheckoutMessage(isbn, name);
 				}
 			} catch (SQLException e) {
@@ -168,6 +169,28 @@ public class LibraryManagementSystem {
 				continue;
 			}
 		}
+	}
+
+	private void decreaseQuantity(long isbn) {
+		String query = "UPDATE inventory SET quantity = " + (getQuantity(isbn)-1) +  " WHERE isbn=" + isbn;
+		try {
+			getStatement().executeUpdate(query);
+		} catch (SQLException e) {
+			System.err.println("Error while decreasing book quantity in inventory during checkout");
+		}
+	}
+
+	private int getQuantity(long isbn) {
+		ResultSet rs = null;
+		try {
+			rs = getStatement().executeQuery("select quantity from inventory where isbn=" + isbn);
+			while (rs.next()) {
+				return rs.getInt("quantity");
+			}
+		} catch (SQLException e) {
+			System.err.println("Error while getting book quantity from inventory during checkout");
+		}
+		return -1;
 	}
 
 	private void printSuccessfulCheckoutMessage(long isbn, String name) {

@@ -7,7 +7,8 @@ import java.util.Calendar;
 import java.util.Scanner;
 
 public class LibraryManagementSystem {
-
+//TODO: ROLLBACK
+//TODO: SUBSTRACT FROM INVENTORY WHEN CHECKEDOUT
 	private Connection conn;
 	private Statement stmt;
 	private boolean welcome = true;
@@ -105,24 +106,17 @@ public class LibraryManagementSystem {
 	private void printLoanedOutInfo() {
 		ResultSet rs = null;
 		try {
-			String query = "SELECT book.name, book.isbn, checkedoutBooks.checkoutDate, checkedoutBooks.dueDate "
-					+ "FROM book INNER JOIN checkedoutBooks ON book.isbn=checkedoutBooks.isbn";
-			
-//		"CREATE TABLE IF NOT EXISTS book (isbn BIGINT PRIMARY KEY, name VARCHAR(35), author VARCHAR(25), publisher VARCHAR(45), yearPublished TIMESTAMP)");
-			
-//		"CREATE TABLE IF NOT EXISTS customer (custId SMALLINT PRIMARY KEY auto_increment, name VARCHAR(50))");
-
-
-//			rs = getStatement().executeQuery("select * from checkedoutBooks");
-			
-			rs = getStatement().executeQuery(query);
+			String joinQuery = "SELECT book.name, book.isbn, checkedoutBooks.checkoutDate, checkedoutBooks.dueDate , customer.name as custName "
+					+ "FROM book "
+					+ "INNER JOIN checkedoutBooks ON book.isbn=checkedoutBooks.isbn "
+					+ "INNER JOIN customer ON checkedoutBooks.custId = customer.custId";
+						
+			rs = getStatement().executeQuery(joinQuery);
 			if (!rs.isBeforeFirst()) {
 				System.err.println("No book is loaned out from library yet.");
 			}
 			while (rs.next()) {
-//			isbn INTEGER, checkoutdate DATE, duedate DATE, custId INTEGER)");
-
-				System.err.println(rs.getDate("dueDate") +  " " + rs.getString("name"));
+				System.out.println("Book '" +  rs.getString("name") + "' is loaned out to " + rs.getString("custName") + ". It is due back by " + rs.getDate("dueDate") +  ".");
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

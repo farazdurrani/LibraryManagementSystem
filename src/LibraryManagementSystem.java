@@ -7,7 +7,7 @@ import java.util.Calendar;
 import java.util.Scanner;
 
 public class LibraryManagementSystem {
-	
+
 	public static void main(String[] args) throws SQLException {
 		LibraryManagementSystem program = new LibraryManagementSystem();
 		program.cleanUpOnStartUp();
@@ -16,11 +16,10 @@ public class LibraryManagementSystem {
 		program.takeUserInput();
 		System.out.println("Thanks for using Library Management System. \nGood bye");
 	}
-	
+
 	private Connection conn;
 	private Statement stmt;
 	private boolean welcome = true;
-
 
 	private void setupLibrary() {
 		createTables();
@@ -45,13 +44,13 @@ public class LibraryManagementSystem {
 					"CREATE TABLE IF NOT EXISTS book (isbn BIGINT PRIMARY KEY, name VARCHAR(35), author VARCHAR(25), publisher VARCHAR(45), yearPublished TIMESTAMP)");
 
 			getStatement().executeUpdate(
-					"CREATE TABLE IF NOT EXISTS inventory (isbn BIGINT, location VARCHAR(5), quantity SMALLINT)");
+					"CREATE TABLE IF NOT EXISTS inventory (isbn BIGINT PRIMARY KEY, location VARCHAR(5), quantity TINYINT)");
 
 			getStatement().executeUpdate(
-					"CREATE TABLE IF NOT EXISTS customer (custId SMALLINT PRIMARY KEY auto_increment, name VARCHAR(50))");
+					"CREATE TABLE IF NOT EXISTS customer (custId INTEGER PRIMARY KEY auto_increment, name VARCHAR(50))");
 
 			getStatement().executeUpdate(
-					"CREATE TABLE IF NOT EXISTS checkedoutBooks (id SMALLINT PRIMARY KEY auto_increment, isbn INTEGER, checkoutdate DATE, duedate DATE, custId INTEGER, foreign key (custId) references customer(custId) )");
+					"CREATE TABLE IF NOT EXISTS checkedoutBooks (id INTEGER PRIMARY KEY auto_increment, isbn BIGINT, checkoutdate DATE, duedate DATE, custId INTEGER, foreign key (custId) references customer(custId) )");
 
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -86,7 +85,9 @@ public class LibraryManagementSystem {
 		Scanner sc = new Scanner(System.in);
 		String input = sc.nextLine();
 		while (!input.equals("exit")) {
-			if (input.equals("books")) {
+			if (input.equals("menu")) {
+				printInformation();
+			} else if (input.equals("books")) {
 				printAllBooks();
 			} else if (input.equals("inventory")) {
 				printInventory();
@@ -257,7 +258,7 @@ public class LibraryManagementSystem {
 				if (rs.getInt("quantity") > 0) {
 					result = true;
 				} else {
-					System.out
+					System.err
 							.println("Unfortunately, library has run out of copies of " + getBookInfo(isbn) + " book");
 				}
 			}
@@ -321,6 +322,7 @@ public class LibraryManagementSystem {
 		System.out.println("Type inventoryDesc to view the inventory sorted by quantity descending,");
 		System.out.println("Type checkout to checkout a book,");
 		System.out.println("Type loanedout to see checkout details,");
+		System.out.println("Type menu to view the menu again,");
 		System.out.println("type exit to exit the program.");
 	}
 
